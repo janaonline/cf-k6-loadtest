@@ -1,3 +1,5 @@
 .history
 .env
-summary/
+node_modules/
+output/*
+!output/.gitkeep

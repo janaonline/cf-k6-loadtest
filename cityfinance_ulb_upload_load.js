@@ -2,14 +2,30 @@ import http from 'k6/http';
 import { check, group, sleep } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
 
-const BASE_URL = __ENV.BASE_URL || 'https://dev.cityfinance.in';
-const ULB_ID = __ENV.ULB_ID || '802918';
-const PASSWORD = __ENV.PASSWORD || 'ulb@123';
+const REQUIRED_ENVIRONMENT_VARIABLES = [
+  'BASE_URL',
+  'ULB_ID',
+  'PASSWORD',
+  'ULB_OBJECT_ID',
+  'STATE_ID',
+  'DESIGN_YEAR_ID',
+  'DOCUMENT_YEAR_ID',
+];
+
+for (const name of REQUIRED_ENVIRONMENT_VARIABLES) {
+  if (!String(__ENV[name] || '').trim()) {
+    throw new Error(`${name} is required. Load it from .env before running k6.`);
+  }
+}
+
+const BASE_URL = __ENV.BASE_URL.replace(/\/$/, '');
+const ULB_ID = __ENV.ULB_ID;
+const PASSWORD = __ENV.PASSWORD;
 const FC_TYPE = __ENV.FC_TYPE || '16thFC';
-const ULB_OBJECT_ID = __ENV.ULB_OBJECT_ID || '5eb5844f76a3b61f40ba069a';
-const STATE_ID = __ENV.STATE_ID || '5dcf9d7516a06aed41c748fb';
-const DESIGN_YEAR_ID = __ENV.DESIGN_YEAR_ID || '67d7d136d3d038946a5239e9';
-const DOCUMENT_YEAR_ID = __ENV.DOCUMENT_YEAR_ID || '606aafcf4dff55e6c075d424';
+const ULB_OBJECT_ID = __ENV.ULB_OBJECT_ID;
+const STATE_ID = __ENV.STATE_ID;
+const DESIGN_YEAR_ID = __ENV.DESIGN_YEAR_ID;
+const DOCUMENT_YEAR_ID = __ENV.DOCUMENT_YEAR_ID;
 const FINANCIAL_YEAR = __ENV.FY || '2024-25';
 const SECTION = __ENV.SECTION || 'auditedData';
 const AUDIT_TYPE = (__ENV.AUDIT_TYPE || 'AUDITED').toUpperCase();
@@ -27,48 +43,48 @@ const START_SPREAD_SECONDS = Number(
     : __ENV.START_SPREAD_SECONDS,
 );
 
-// Files are loaded once during k6 init. Keep this JS file and all PDFs in the same folder.
+// Files are loaded once during k6 init from the input folder.
 const DOCUMENTS = [
   {
     label: 'Receipts and Payments Statement',
     fileName: '11.pdf',
-    data: open('./11.pdf', 'b'),
+    data: open('./input/11.pdf', 'b'),
     documentType: 'receipts-and-payments-statement',
   },
   {
     label: 'Balance Sheet',
     fileName: '22.pdf',
-    data: open('./22.pdf', 'b'),
+    data: open('./input/22.pdf', 'b'),
     documentType: 'balance-sheet',
   },
   {
     label: 'Balance Sheet Schedules',
     fileName: '33.pdf',
-    data: open('./33.pdf', 'b'),
+    data: open('./input/33.pdf', 'b'),
     documentType: 'balance-sheet-schedules',
   },
   {
     label: 'Income and Expenditure Statement',
     fileName: '44.pdf',
-    data: open('./44.pdf', 'b'),
+    data: open('./input/44.pdf', 'b'),
     documentType: 'income-expenditure',
   },
   {
     label: 'Income Statement Schedules',
     fileName: '55(1).pdf',
-    data: open('./55(1).pdf', 'b'),
+    data: open('./input/55(1).pdf', 'b'),
     documentType: 'income-statement-schedules',
   },
   {
     label: 'Cash Flow Statement',
     fileName: '66.pdf',
-    data: open('./66.pdf', 'b'),
+    data: open('./input/66.pdf', 'b'),
     documentType: 'cash-flow',
   },
   {
     label: 'Additional Annual Account Document',
     fileName: '7.pdf',
-    data: open('./7.pdf', 'b'),
+    data: open('./input/7.pdf', 'b'),
     // The confirm API currently supports the six annual-account docIds above.
     // Use a supported category for the additional physical test file.
     documentType: __ENV.SEVENTH_DOCUMENT_TYPE || 'cash-flow',
@@ -580,8 +596,8 @@ export function handleSummary(data) {
   const successfulIterations = data.metrics.iteration_success?.values || {};
   const generatedAt = new Date();
   const reportId = generatedAt.toISOString().replace(/[:.]/g, '-');
-  const summaryBase = 'summary';
-  const archiveBase = `${summaryBase}/cityfinance-upload-${VUS}-users-${reportId}`;
+  const outputBase = 'output';
+  const archiveBase = `${outputBase}/cityfinance-upload-${VUS}-users-${reportId}`;
   const jsonReport = JSON.stringify(data, null, 2);
   const htmlReport = buildHtmlReport(data, generatedAt);
   const totalFilesPlanned = VUS * ITERATIONS_PER_VU * DOCUMENTS.length;
@@ -614,8 +630,8 @@ export function handleSummary(data) {
 
   return {
     stdout: consoleSummary,
-    [`${summaryBase}/summary.json`]: jsonReport,
-    [`${summaryBase}/report.html`]: htmlReport,
+    [`${outputBase}/summary.json`]: jsonReport,
+    [`${outputBase}/report.html`]: htmlReport,
     [`${archiveBase}.json`]: jsonReport,
     [`${archiveBase}.html`]: htmlReport,
   };

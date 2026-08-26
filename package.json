@@ -1,0 +1,14 @@
+{
+  "name": "cityfinance-k6-load-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "k6 load test for the CityFinance annual-account upload workflow",
+  "scripts": {
+    "load:test": "dotenvx run -- k6 run ./cityfinance_ulb_upload_load.js",
+    "load:test:no-retries": "dotenvx run -- k6 run -e MAX_RETRIES=0 ./cityfinance_ulb_upload_load.js",
+    "load:inspect": "dotenvx run -- k6 inspect --include-system-env-vars ./cityfinance_ulb_upload_load.js"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^1.51.4"
+  }
+}
