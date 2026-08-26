@@ -580,7 +580,8 @@ export function handleSummary(data) {
   const successfulIterations = data.metrics.iteration_success?.values || {};
   const generatedAt = new Date();
   const reportId = generatedAt.toISOString().replace(/[:.]/g, '-');
-  const archiveBase = `reports/cityfinance-upload-${VUS}-users-${reportId}`;
+  const summaryBase = 'summary';
+  const archiveBase = `${summaryBase}/cityfinance-upload-${VUS}-users-${reportId}`;
   const jsonReport = JSON.stringify(data, null, 2);
   const htmlReport = buildHtmlReport(data, generatedAt);
   const totalFilesPlanned = VUS * ITERATIONS_PER_VU * DOCUMENTS.length;
@@ -613,8 +614,8 @@ export function handleSummary(data) {
 
   return {
     stdout: consoleSummary,
-    'summary.json': jsonReport,
-    'report.html': htmlReport,
+    [`${summaryBase}/summary.json`]: jsonReport,
+    [`${summaryBase}/report.html`]: htmlReport,
     [`${archiveBase}.json`]: jsonReport,
     [`${archiveBase}.html`]: htmlReport,
   };
